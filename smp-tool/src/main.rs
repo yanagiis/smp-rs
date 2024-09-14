@@ -10,6 +10,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use mcumgr_smp::{
     application_management::{self, GetImageStateResult, WriteImageChunkResult},
     os_management::{self, EchoResult},
+    setting_management::{self, ReadSettingResult, WriteSettingResult},
     shell_management::{self, ShellResult},
     smp::SmpFrame,
     transport::{
@@ -78,6 +79,9 @@ enum Commands {
     /// Send a command in the application group
     #[command(subcommand)]
     App(ApplicationCmd),
+    /// Send a command in the settings group
+    #[command(subcommand)]
+    Setting(SettingCmd),
 }
 
 #[derive(Subcommand, Debug)]
@@ -113,6 +117,13 @@ enum ApplicationCmd {
         #[arg(long)]
         upgrade: bool,
     },
+}
+
+#[derive(Subcommand, Debug)]
+enum SettingCmd {
+    Read { name: String },
+    WriteString { name: String, val: String },
+    WriteInt { name: String, val: i32 },
 }
 
 pub enum UsedTransport {
@@ -283,6 +294,59 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     if let Some(msg) = err.rsn {
                         eprintln!("rsn: {:?}", msg);
                     }
+                }
+            }
+        }
+        Commands::Setting(SettingCmd::Read { name }) => {
+            let ret: SmpFrame<ReadSettingResult> = transport
+                .transceive_cbor(setting_management::read_setting(42, name.clone()))
+                .await?;
+            debug!("{:?}", ret);
+
+            match ret.data {
+                ReadSettingResult::Ok { val } => {
+                    println!("{}={:?}", name, val)
+                }
+                ReadSettingResult::Err { rc } => {
+                    eprintln!("rc: {}", rc);
+                }
+            }
+        }
+        Commands::Setting(SettingCmd::WriteString { name, val }) => {
+            let ret: SmpFrame<WriteSettingResult> = transport
+                .transceive_cbor(setting_management::write_setting(
+                    42,
+                    name.clone(),
+                    val.as_bytes().to_vec(),
+                ))
+                .await?;
+            debug!("{:?}", ret);
+
+            match ret.data {
+                WriteSettingResult::Ok {} => {
+                    println!("success");
+                }
+                WriteSettingResult::Err { rc } => {
+                    eprintln!("rc: {}", rc);
+                }
+            }
+        }
+        Commands::Setting(SettingCmd::WriteInt { name, val }) => {
+            let ret: SmpFrame<WriteSettingResult> = transport
+                .transceive_cbor(setting_management::write_setting(
+                    42,
+                    name.clone(),
+                    val.to_le_bytes().to_vec(),
+                ))
+                .await?;
+            debug!("{:?}", ret);
+
+            match ret.data {
+                WriteSettingResult::Ok {} => {
+                    println!("success");
+                }
+                WriteSettingResult::Err { rc } => {
+                    eprintln!("rc: {}", rc);
                 }
             }
         }

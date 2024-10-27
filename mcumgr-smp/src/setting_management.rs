@@ -65,3 +65,28 @@ impl WriteSettingResult {
         }
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SaveSettingRequest {}
+
+pub fn save_setting(sequence: u8) -> SmpFrame<SaveSettingRequest> {
+    let payload = SaveSettingRequest {};
+
+    SmpFrame::new(WriteRequest, sequence, Group::SettingManagement, 3, payload)
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+pub enum SaveSettingResult {
+    Ok {},
+    Err { rc: i32 },
+}
+
+impl SaveSettingResult {
+    pub fn into_result(self) -> Result<(), i32> {
+        match self {
+            SaveSettingResult::Ok {} => Ok(()),
+            SaveSettingResult::Err { rc } => Err(rc),
+        }
+    }
+}

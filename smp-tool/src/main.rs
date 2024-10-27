@@ -10,7 +10,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use mcumgr_smp::{
     application_management::{self, GetImageStateResult, WriteImageChunkResult},
     os_management::{self, EchoResult},
-    setting_management::{self, ReadSettingResult, WriteSettingResult},
+    setting_management::{self, ReadSettingResult, WriteSettingResult, SaveSettingResult},
     shell_management::{self, ShellResult},
     smp::SmpFrame,
     transport::{
@@ -124,6 +124,7 @@ enum SettingCmd {
     Read { name: String },
     WriteString { name: String, val: String },
     WriteInt { name: String, val: i32 },
+    Save {},
 }
 
 pub enum UsedTransport {
@@ -346,6 +347,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     println!("success");
                 }
                 WriteSettingResult::Err { rc } => {
+                    eprintln!("rc: {}", rc);
+                }
+            }
+        }
+        Commands::Setting(SettingCmd::Save {}) => {
+            let ret: SmpFrame<SaveSettingResult> = transport
+                .transceive_cbor(setting_management::save_setting(42))
+                .await?;
+            debug!("{:?}", ret);
+
+            match ret.data {
+                SaveSettingResult::Ok {} => {
+                    println!("success");
+                }
+                SaveSettingResult::Err { rc } => {
                     eprintln!("rc: {}", rc);
                 }
             }

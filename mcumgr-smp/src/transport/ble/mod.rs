@@ -39,16 +39,28 @@ impl BleTransport {
         adapter: &Adapter,
         scan_timeout: Duration,
     ) -> Result<Self, Error> {
-        adapter.start_scan(ScanFilter::default()).await?;
-        sleep(scan_timeout).await;
-        adapter.stop_scan().await?;
-
         let mut peripheral_device = None;
+
         for pd in adapter.peripherals().await? {
             if let Some(props) = pd.properties().await? {
                 if props.local_name == Some(name.to_owned()) {
                     peripheral_device = Some(pd);
                     break;
+                }
+            }
+        }
+
+        if peripheral_device.is_none() {
+            adapter.start_scan(ScanFilter::default()).await?;
+            sleep(scan_timeout).await;
+            adapter.stop_scan().await?;
+
+            for pd in adapter.peripherals().await? {
+                if let Some(props) = pd.properties().await? {
+                    if props.local_name == Some(name.to_owned()) {
+                        peripheral_device = Some(pd);
+                        break;
+                    }
                 }
             }
         }

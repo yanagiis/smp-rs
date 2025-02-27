@@ -213,7 +213,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         Commands::Os(OsCmd::Reset {}) => {
             let ret: SmpFrame<ResetResult> = transport
-                .transceive_cbor(os_management::reset(42, false))
+                .transceive_cbor(&os_management::reset(42, false))
                 .await?;
             debug!("{:?}", ret);
 
@@ -318,7 +318,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         Commands::Setting(SettingCmd::Read { name }) => {
             let ret: SmpFrame<ReadSettingResult> = transport
-                .transceive_cbor(setting_management::read_setting(42, name.clone()))
+                .transceive_cbor(&setting_management::read_setting(42, name.clone()))
                 .await?;
             debug!("{:?}", ret);
 
@@ -333,7 +333,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         Commands::Setting(SettingCmd::WriteString { name, val }) => {
             let ret: SmpFrame<WriteSettingResult> = transport
-                .transceive_cbor(setting_management::write_setting(
+                .transceive_cbor(&setting_management::write_setting(
                     42,
                     name.clone(),
                     val.as_bytes().to_vec(),
@@ -352,7 +352,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         Commands::Setting(SettingCmd::WriteInt { name, val }) => {
             let ret: SmpFrame<WriteSettingResult> = transport
-                .transceive_cbor(setting_management::write_setting(
+                .transceive_cbor(&setting_management::write_setting(
                     42,
                     name.clone(),
                     val.to_le_bytes().to_vec(),
@@ -371,7 +371,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         Commands::Setting(SettingCmd::Save {}) => {
             let ret: SmpFrame<SaveSettingResult> = transport
-                .transceive_cbor(setting_management::save_setting(42))
+                .transceive_cbor(&setting_management::save_setting(42))
                 .await?;
             debug!("{:?}", ret);
 
